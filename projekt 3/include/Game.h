@@ -2,8 +2,10 @@
 #define PROJEKT_3_GAME_H
 
 #include <SFML/Graphics.hpp>
+#include <iostream>
 #include "Board.h"
 #include "Player.h"
+#include "HumanPlayer.h"
 
 class Game {
 public:
@@ -20,6 +22,11 @@ private:
     Player* currentPlayer;
     Player* player1;
     Player* player2;
+
+    PieceColor currentTurn;
+    Piece* selectedPiece;
+    bool isPieceSelected;
+    sf::Vector2i selectedPosition;
 };
 
 #endif //PROJEKT_3_GAME_H

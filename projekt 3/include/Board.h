@@ -3,7 +3,7 @@
 
 #include <SFML/Graphics.hpp>
 #include <vector>
-#include "Piece.h"
+#include "Field.h"
 #include "Move.h"
 
 class Board {
@@ -12,16 +12,16 @@ public:
     void initialize();
     bool isValidMove(const Move& move) const;
     void makeMove(const Move& move);
-    std::vector<Move> getPossibleMoves(PieceColor color) const;
     void draw(sf::RenderWindow& window);
-
-    Piece* getPieceAt(const sf::Vector2i& position) const;
-    sf::Vector2i getGridPositionFromPixel(int x, int y) const;
+    Field* getFieldAt(const sf::Vector2i& position) const;
+    Field* getFieldContainingPoint(const sf::Vector2i& point) const;
+    float getFieldSideLength() const;
 
 private:
-    std::vector<std::vector<Piece*>> grid;
+    Field grid[8][8];
     sf::Texture boardTexture;
     sf::Sprite boardSprite;
+    float fieldSideLength;
 
     bool isInsideBoard(const sf::Vector2i& position) const;
 };

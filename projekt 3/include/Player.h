@@ -9,11 +9,9 @@ class Player {
 public:
     Player(PieceColor color);
     virtual Move getMove(const Board& board) = 0;
-    void drawPieces(sf::RenderWindow& window);
 
 protected:
     PieceColor color;
-    std::vector<Piece> pieces;
 };
 
 #endif //PROJEKT_3_PLAYER_H

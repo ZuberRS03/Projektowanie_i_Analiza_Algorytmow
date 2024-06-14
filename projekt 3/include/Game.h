@@ -2,7 +2,6 @@
 #define PROJEKT_3_GAME_H
 
 #include <SFML/Graphics.hpp>
-#include <iostream>
 #include "Board.h"
 #include "Player.h"
 #include "HumanPlayer.h"
@@ -24,7 +23,7 @@ private:
     Player* player2;
 
     PieceColor currentTurn;
-    Piece* selectedPiece;
+    Field* selectedField;
     bool isPieceSelected;
     sf::Vector2i selectedPosition;
 };

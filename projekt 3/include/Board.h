@@ -17,6 +17,8 @@ public:
     Field* getFieldContainingPoint(const sf::Vector2i& point) const;
     float getFieldSideLength() const;
 
+    void printBoard() const;
+
 private:
     Field grid[8][8];
     sf::Texture boardTexture;

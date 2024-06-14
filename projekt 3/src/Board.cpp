@@ -1,9 +1,12 @@
 #include "Board.h"
+#include <iostream>
 
 Board::Board() {
-    boardTexture.loadFromFile("E:/studia/sem 4/Projektowanie_i_Analiza_Algorytmow/projekt 3/assets/images/board.jpg");
+    if (!boardTexture.loadFromFile("E:/studia/sem 4/Projektowanie_i_Analiza_Algorytmow/projekt 3/assets/images/board.jpg")) {
+        std::cout << "Error loading board texture" << std::endl;
+    }
     boardSprite.setTexture(boardTexture);
-    fieldSideLength = 691.0f / 8.0f; // Calculate side length of each field
+    fieldSideLength = 78.0f; // Ustalanie długości boku pola
 }
 
 void Board::initialize() {
@@ -13,10 +16,13 @@ void Board::initialize() {
             grid[y][x].setSideLength(fieldSideLength);
             if (y < 3 && (x + y) % 2 == 1) {
                 grid[y][x].setState(FieldState::BLACK_PIECE);
+                std::cout << "Field (" << x << ", " << y << ") set to BLACK_PIECE" << std::endl;
             } else if (y > 4 && (x + y) % 2 == 1) {
                 grid[y][x].setState(FieldState::WHITE_PIECE);
+                std::cout << "Field (" << x << ", " << y << ") set to WHITE_PIECE" << std::endl;
             } else {
                 grid[y][x].setState(FieldState::EMPTY);
+                std::cout << "Field (" << x << ", " << y << ") set to EMPTY" << std::endl;
             }
         }
     }
@@ -32,8 +38,10 @@ bool Board::isValidMove(const Move& move) const {
     // Logika sprawdzająca poprawność ruchu
     sf::Vector2i direction = move.endPosition - move.startPosition;
     if (abs(direction.x) == 1 && abs(direction.y) == 1) {
-        // Ruch na sąsiednie pole
-        return true;
+        if ((startField.getState() == FieldState::WHITE_PIECE && direction.y == -1) ||
+            (startField.getState() == FieldState::BLACK_PIECE && direction.y == 1)) {
+            return true;
+        }
     }
     return false; // Przykład, dostosuj logikę dla bicia itd.
 }
@@ -44,6 +52,7 @@ void Board::makeMove(const Move& move) {
     if (startField && endField) {
         endField->setState(startField->getState());
         startField->setState(FieldState::EMPTY);
+        endField->setPosition(sf::Vector2f(move.endPosition.x * fieldSideLength, move.endPosition.y * fieldSideLength)); // Aktualizacja pozycji
     }
 }
 
@@ -51,6 +60,7 @@ void Board::draw(sf::RenderWindow& window) {
     window.draw(boardSprite);
     for (int y = 0; y < 8; ++y) {
         for (int x = 0; x < 8; ++x) {
+            //std::cout << "Drawing field at: (" << x << ", " << y << ")" << std::endl;
             grid[y][x].draw(window);
         }
     }
@@ -80,4 +90,24 @@ bool Board::isInsideBoard(const sf::Vector2i& position) const {
 
 float Board::getFieldSideLength() const {
     return fieldSideLength;
+}
+
+void Board::printBoard() const {
+    for (int y = 0; y < 8; ++y) {
+        for (int x = 0; x < 8; ++x) {
+            if ((x + y) % 2 == 1) {
+                FieldState state = grid[y][x].getState();
+                if (state == FieldState::WHITE_PIECE) {
+                    std::cout << "| b ";
+                } else if (state == FieldState::BLACK_PIECE) {
+                    std::cout << "| c ";
+                } else {
+                    std::cout << "| 0 ";
+                }
+            } else {
+                std::cout << "|   "; // Puste pola
+            }
+        }
+        std::cout << "|" << std::endl;
+    }
 }

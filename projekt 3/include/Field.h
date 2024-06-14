@@ -26,12 +26,16 @@ public:
     bool contains(const sf::Vector2i& point) const;
     void draw(sf::RenderWindow& window);
 
+
 private:
     FieldState state;
     sf::Vector2f position;
     float sideLength;
-    sf::Texture texture;
     sf::Sprite sprite;
+
+    static sf::Texture whitePieceTexture;
+    static sf::Texture blackPieceTexture;
+
 };
 
 #endif //PROJEKT_3_FIELD_H

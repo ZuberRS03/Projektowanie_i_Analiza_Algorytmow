@@ -13,6 +13,7 @@ void Game::run() {
         handlePlayerInput();
         update();
         render();
+
     }
 }
 
@@ -40,6 +41,7 @@ void Game::handlePlayerInput() {
                             currentTurn = (currentTurn == PieceColor::WHITE) ? PieceColor::BLACK : PieceColor::WHITE;
                             currentPlayer = (currentTurn == PieceColor::WHITE) ? player1 : player2;
                             std::cout << "Piece moved to position: (" << endPosition.x << ", " << endPosition.y << ")\n";
+                            board.printBoard(); // Wywołanie funkcji printBoard
                         } else {
                             isPieceSelected = false;
                             selectedField = nullptr;

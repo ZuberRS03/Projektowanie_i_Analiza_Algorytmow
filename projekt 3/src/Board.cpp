@@ -89,7 +89,14 @@ void Board::makeMove(const Move& move) {
         endField->setState(startField->getState());
         startField->setState(FieldState::EMPTY);
 
-        std::cout << "Piece moved to position: (" << move.endPosition.x << ", " << move.endPosition.y << ")\n";
+        // Sprawdzanie promocji pionka na damkę
+        if (endField->getState() == FieldState::WHITE_PIECE && move.endPosition.y == 0) {
+            endField->setState(FieldState::WHITE_QUEEN);
+        } else if (endField->getState() == FieldState::BLACK_PIECE && move.endPosition.y == 7) {
+            endField->setState(FieldState::BLACK_QUEEN);
+        }
+
+        //std::cout << "Piece moved to position: (" << move.endPosition.x << ", " << move.endPosition.y << ")\n";
 
     }
 }
@@ -98,7 +105,6 @@ void Board::draw(sf::RenderWindow& window) {
     window.draw(boardSprite);
     for (int y = 0; y < 8; ++y) {
         for (int x = 0; x < 8; ++x) {
-            //std::cout << "Drawing field at: (" << x << ", " << y << ")" << std::endl;
             grid[y][x].draw(window);
         }
     }

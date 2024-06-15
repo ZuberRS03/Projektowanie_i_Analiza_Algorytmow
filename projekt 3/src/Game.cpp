@@ -33,15 +33,25 @@ void Game::handlePlayerInput() {
                     if (endField) {
                         sf::Vector2i endPosition((int)(endField->getPosition().x / board.getFieldSideLength()), (int)(endField->getPosition().y / board.getFieldSideLength()));
                         Move move(selectedPosition, endPosition);
-                        if (board.isValidMove(move)) {
+                        if (board.isValidMove(move, true)) { // Sprawdź ruch bicia
+                            board.makeMove(move);
+                            if (!board.canCapture(endPosition)) {
+                                isPieceSelected = false;
+                                selectedField = nullptr;
+                                currentTurn = (currentTurn == PieceColor::WHITE) ? PieceColor::BLACK : PieceColor::WHITE;
+                                currentPlayer = (currentTurn == PieceColor::WHITE) ? player1 : player2;
+                            } else {
+                                selectedPosition = endPosition;
+                                selectedField = endField;
+                            }
+                            board.printBoard(); // Wyświetl planszę po ruchu
+                        } else if (board.isValidMove(move, false)) { // Sprawdź zwykły ruch
                             board.makeMove(move);
                             isPieceSelected = false;
                             selectedField = nullptr;
-                            // Zmiana tury
                             currentTurn = (currentTurn == PieceColor::WHITE) ? PieceColor::BLACK : PieceColor::WHITE;
                             currentPlayer = (currentTurn == PieceColor::WHITE) ? player1 : player2;
-                            std::cout << "Piece moved to position: (" << endPosition.x << ", " << endPosition.y << ")\n";
-                            board.printBoard(); // Wywołanie funkcji printBoard
+                            board.printBoard(); // Wyświetl planszę po ruchu
                         } else {
                             isPieceSelected = false;
                             selectedField = nullptr;

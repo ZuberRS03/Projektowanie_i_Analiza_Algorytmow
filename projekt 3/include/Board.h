@@ -10,7 +10,8 @@ class Board {
 public:
     Board();
     void initialize();
-    bool isValidMove(const Move& move) const;
+    bool isValidMove(const Move& move, bool isCapturing = false) const;
+    bool canCapture(const sf::Vector2i& position) const;
     void makeMove(const Move& move);
     void draw(sf::RenderWindow& window);
     Field* getFieldAt(const sf::Vector2i& position) const;

@@ -40,13 +40,13 @@ void Field::setState(FieldState state) {
             sprite.setTexture(whitePieceTexture); // Use white texture as default
             break;
     }
-    std::cout << "Field initialized with state: " << (state == FieldState::WHITE_PIECE ? "WHITE_PIECE" : state == FieldState::BLACK_PIECE ? "BLACK_PIECE" : "EMPTY") << " at position: (" << position.x << ", " << position.y << ")" << std::endl;
+    //std::cout << "Field initialized with state: " << (state == FieldState::WHITE_PIECE ? "WHITE_PIECE" : state == FieldState::BLACK_PIECE ? "BLACK_PIECE" : "EMPTY") << " at position: (" << position.x << ", " << position.y << ")" << std::endl;
 }
 
 void Field::setPosition(const sf::Vector2f& position) {
     this->position = position;
     sprite.setPosition(position.x + 40, position.y + 40); // Uwzględnianie marginesów
-    std::cout << "Set position for sprite: (" << sprite.getPosition().x << ", " << sprite.getPosition().y << ")" << std::endl;
+    //std::cout << "Set position for sprite: (" << sprite.getPosition().x << ", " << sprite.getPosition().y << ")" << std::endl;
 }
 
 sf::Vector2f Field::getPosition() const {

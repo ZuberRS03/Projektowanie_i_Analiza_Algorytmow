@@ -28,31 +28,79 @@ void Board::initialize() {
     }
 }
 
-bool Board::isValidMove(const Move& move) const {
+bool Board::isValidMove(const Move& move, bool isCapturing) const {
     const Field& startField = *getFieldAt(move.startPosition);
     const Field& endField = *getFieldAt(move.endPosition);
     if (startField.getState() == FieldState::EMPTY || endField.getState() != FieldState::EMPTY) {
         return false;
     }
 
-    // Logika sprawdzająca poprawność ruchu
     sf::Vector2i direction = move.endPosition - move.startPosition;
-    if (abs(direction.x) == 1 && abs(direction.y) == 1) {
-        if ((startField.getState() == FieldState::WHITE_PIECE && direction.y == -1) ||
-            (startField.getState() == FieldState::BLACK_PIECE && direction.y == 1)) {
-            return true;
+
+    if (isCapturing) {
+        if (abs(direction.x) == 2 && abs(direction.y) == 2) {
+            sf::Vector2i capturedPosition = move.startPosition + sf::Vector2i(direction.x / 2, direction.y / 2);
+            const Field& capturedField = *getFieldAt(capturedPosition);
+            if (capturedField.getState() != FieldState::EMPTY &&
+                capturedField.getState() != startField.getState()) {
+                return true;
+            }
+        }
+    } else {
+        if (abs(direction.x) == 1 && abs(direction.y) == 1) {
+            if ((startField.getState() == FieldState::WHITE_PIECE && direction.y == -1) ||
+                (startField.getState() == FieldState::BLACK_PIECE && direction.y == 1)) {
+                return true;
+            }
         }
     }
-    return false; // Przykład, dostosuj logikę dla bicia itd.
+
+    return false;
+}
+
+bool Board::canCapture(const sf::Vector2i& position) const {
+    const Field& field = *getFieldAt(position);
+    if (field.getState() == FieldState::EMPTY) {
+        return false;
+    }
+
+    std::vector<sf::Vector2i> directions = {{2, 2}, {2, -2}, {-2, 2}, {-2, -2}};
+    for (const auto& dir : directions) {
+        sf::Vector2i newPos = position + dir;
+        if (isInsideBoard(newPos)) {
+            Move move(position, newPos);
+            if (isValidMove(move, true)) {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 void Board::makeMove(const Move& move) {
     Field* startField = getFieldAt(move.startPosition);
     Field* endField = getFieldAt(move.endPosition);
     if (startField && endField) {
+        sf::Vector2i direction = move.endPosition - move.startPosition;
+        if (abs(direction.x) == 2 && abs(direction.y) == 2) {
+            sf::Vector2i capturedPosition = move.startPosition + sf::Vector2i(direction.x / 2, direction.y / 2);
+            Field* capturedField = getFieldAt(capturedPosition);
+            if (capturedField) {
+                capturedField->setState(FieldState::EMPTY);
+            }
+        }
         endField->setState(startField->getState());
         startField->setState(FieldState::EMPTY);
-        endField->setPosition(sf::Vector2f(move.endPosition.x * fieldSideLength, move.endPosition.y * fieldSideLength)); // Aktualizacja pozycji
+
+//        // Sprawdzenie kolejnego bicia
+//        if (canCapture(move.endPosition)) {
+//            // Logika do obsługi kilkukrotnego bicia
+//            // Możesz dodać tutaj interakcję z użytkownikiem, aby kontynuować bicie
+//            std::cout << "Piece at (" << move.endPosition.x << ", " << move.endPosition.y << ") can capture again!" << std::endl;
+//        }
+        std::cout << "Piece moved to position: (" << move.endPosition.x << ", " << move.endPosition.y << ")\n";
+
     }
 }
 

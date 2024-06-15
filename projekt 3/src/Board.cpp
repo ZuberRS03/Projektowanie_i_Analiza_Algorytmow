@@ -38,16 +38,48 @@ bool Board::isValidMove(const Move& move, bool isCapture) const {
     sf::Vector2i direction = move.endPosition - move.startPosition;
 
     if (isCapture) {
-        if (abs(direction.x) == 2 && abs(direction.y) == 2) {
+        if (startField.getState() == FieldState::WHITE_QUEEN || startField.getState() == FieldState::BLACK_QUEEN) {
+            if (abs(direction.x) == abs(direction.y)) {
+                int stepX = direction.x / abs(direction.x);
+                int stepY = direction.y / abs(direction.y);
+                bool captured = false;
+                sf::Vector2i checkPos = move.startPosition + sf::Vector2i(stepX, stepY);
+                while (checkPos != move.endPosition) {
+                    Field* checkField = getFieldAt(checkPos);
+                    if (checkField->getState() != FieldState::EMPTY) {
+                        if (checkField->getState() != startField.getState() &&
+                            ((checkField->getState() == FieldState::WHITE_PIECE || checkField->getState() == FieldState::WHITE_QUEEN) ||
+                             (checkField->getState() == FieldState::BLACK_PIECE || checkField->getState() == FieldState::BLACK_QUEEN)) &&
+                            !captured) {
+                            captured = true;
+                        } else {
+                            return false;
+                        }
+                    }
+                    checkPos += sf::Vector2i(stepX, stepY);
+                }
+                return captured;
+            }
+        } else if (abs(direction.x) == 2 && abs(direction.y) == 2) {
             sf::Vector2i middlePos = move.startPosition + direction / 2;
             const Field& middleField = *getFieldAt(middlePos);
-            if ((startField.getState() == FieldState::WHITE_PIECE && middleField.getState() == FieldState::BLACK_PIECE) ||
-                (startField.getState() == FieldState::BLACK_PIECE && middleField.getState() == FieldState::WHITE_PIECE)) {
+            if ((startField.getState() == FieldState::WHITE_PIECE && (middleField.getState() == FieldState::BLACK_PIECE || middleField.getState() == FieldState::BLACK_QUEEN)) ||
+                (startField.getState() == FieldState::BLACK_PIECE && (middleField.getState() == FieldState::WHITE_PIECE || middleField.getState() == FieldState::WHITE_QUEEN))) {
                 return true;
             }
         }
     } else {
-        if (abs(direction.x) == 1 && abs(direction.y) == 1) {
+        if (startField.getState() == FieldState::WHITE_PIECE && direction.y == -1 && abs(direction.x) == 1) {
+            return true;
+        } else if (startField.getState() == FieldState::BLACK_PIECE && direction.y == 1 && abs(direction.x) == 1) {
+            return true;
+        } else if ((startField.getState() == FieldState::WHITE_QUEEN || startField.getState() == FieldState::BLACK_QUEEN) && abs(direction.x) == abs(direction.y)) {
+            for (int i = 1; i < abs(direction.x); ++i) {
+                sf::Vector2i intermediatePos = move.startPosition + sf::Vector2i(i * (direction.x / abs(direction.x)), i * (direction.y / abs(direction.y)));
+                if (getFieldAt(intermediatePos)->getState() != FieldState::EMPTY) {
+                    return false;
+                }
+            }
             return true;
         }
     }
@@ -71,6 +103,27 @@ bool Board::canCapture(const sf::Vector2i& position) const {
             }
         }
     }
+
+    if (field.getState() == FieldState::WHITE_QUEEN || field.getState() == FieldState::BLACK_QUEEN) {
+        directions = {{1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
+        for (const sf::Vector2i& direction : directions) {
+            sf::Vector2i checkPos = position + direction;
+            bool canCapture = false;
+            while (isInsideBoard(checkPos)) {
+                const Field& checkField = *getFieldAt(checkPos);
+                if (checkField.getState() != FieldState::EMPTY && checkField.getState() != field.getState()) {
+                    sf::Vector2i nextPos = checkPos + direction;
+                    if (isInsideBoard(nextPos) && getFieldAt(nextPos)->getState() == FieldState::EMPTY) {
+                        canCapture = true;
+                        break;
+                    }
+                }
+                checkPos += direction;
+            }
+            if (canCapture) return true;
+        }
+    }
+
     return false;
 }
 
@@ -79,7 +132,18 @@ void Board::makeMove(const Move& move) {
     Field* endField = getFieldAt(move.endPosition);
     if (startField && endField) {
         sf::Vector2i direction = move.endPosition - move.startPosition;
-        if (abs(direction.x) == 2 && abs(direction.y) == 2) {
+        if ((startField->getState() == FieldState::WHITE_QUEEN || startField->getState() == FieldState::BLACK_QUEEN) && abs(direction.x) == abs(direction.y)) {
+            int stepX = direction.x / abs(direction.x);
+            int stepY = direction.y / abs(direction.y);
+            sf::Vector2i checkPos = move.startPosition + sf::Vector2i(stepX, stepY);
+            while (checkPos != move.endPosition) {
+                Field* checkField = getFieldAt(checkPos);
+                if (checkField->getState() != FieldState::EMPTY) {
+                    checkField->setState(FieldState::EMPTY);
+                }
+                checkPos += sf::Vector2i(stepX, stepY);
+            }
+        } else if (abs(direction.x) == 2 && abs(direction.y) == 2) {
             sf::Vector2i capturedPosition = move.startPosition + sf::Vector2i(direction.x / 2, direction.y / 2);
             Field* capturedField = getFieldAt(capturedPosition);
             if (capturedField) {
@@ -89,14 +153,11 @@ void Board::makeMove(const Move& move) {
         endField->setState(startField->getState());
         startField->setState(FieldState::EMPTY);
 
-        // Sprawdzanie promocji pionka na damkę
         if (endField->getState() == FieldState::WHITE_PIECE && move.endPosition.y == 0) {
             endField->setState(FieldState::WHITE_QUEEN);
         } else if (endField->getState() == FieldState::BLACK_PIECE && move.endPosition.y == 7) {
             endField->setState(FieldState::BLACK_QUEEN);
         }
-
-        //std::cout << "Piece moved to position: (" << move.endPosition.x << ", " << move.endPosition.y << ")\n";
 
     }
 }
@@ -159,6 +220,10 @@ void Board::printBoard() const {
                     std::cout << "| b ";
                 } else if (state == FieldState::BLACK_PIECE) {
                     std::cout << "| c ";
+                } else if (state == FieldState::WHITE_QUEEN) {
+                    std::cout << "| Q ";
+                } else if (state == FieldState::BLACK_QUEEN) {
+                    std::cout << "| k ";
                 } else {
                     std::cout << "| 0 ";
                 }

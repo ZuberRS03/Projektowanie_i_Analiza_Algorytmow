@@ -17,6 +17,7 @@ public:
     Field* getFieldAt(const sf::Vector2i& position) const;
     Field* getFieldContainingPoint(const sf::Vector2i& point) const;
     float getFieldSideLength() const;
+    bool hasCaptureMoves(PieceColor color) const;
 
     void printBoard() const;
 

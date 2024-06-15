@@ -12,6 +12,7 @@ public:
     void run();
 
 private:
+    bool hasCaptureMoves() const;
     void handlePlayerInput();
     void update();
     void render();
@@ -26,6 +27,12 @@ private:
     Field* selectedField;
     bool isPieceSelected;
     sf::Vector2i selectedPosition;
+    bool mustContinueCapturing;
+
+    sf::RectangleShape turnIndicator; // Dodaj wskaźnik tury
+    sf::CircleShape captureIndicator; // Dodaj wskaźnik bicia
+    void updateCaptureIndicator(); // Deklaracja funkcji aktualizującej wskaźnik bicia
+
 };
 
 #endif //PROJEKT_3_GAME_H

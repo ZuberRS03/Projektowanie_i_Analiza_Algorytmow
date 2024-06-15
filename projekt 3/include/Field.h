@@ -11,7 +11,9 @@ enum class PieceColor {
 enum class FieldState {
     EMPTY,
     WHITE_PIECE,
-    BLACK_PIECE
+    BLACK_PIECE,
+    WHITE_QUEEN,
+    BLACK_QUEEN
 };
 
 class Field {
@@ -35,6 +37,8 @@ private:
 
     static sf::Texture whitePieceTexture;
     static sf::Texture blackPieceTexture;
+    static sf::Texture whiteQueenTexture;
+    static sf::Texture blackQueenTexture;
 
 };
 

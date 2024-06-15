@@ -28,7 +28,7 @@ void Board::initialize() {
     }
 }
 
-bool Board::isValidMove(const Move& move, bool isCapturing) const {
+bool Board::isValidMove(const Move& move, bool isCapture) const {
     const Field& startField = *getFieldAt(move.startPosition);
     const Field& endField = *getFieldAt(move.endPosition);
     if (startField.getState() == FieldState::EMPTY || endField.getState() != FieldState::EMPTY) {
@@ -37,21 +37,18 @@ bool Board::isValidMove(const Move& move, bool isCapturing) const {
 
     sf::Vector2i direction = move.endPosition - move.startPosition;
 
-    if (isCapturing) {
+    if (isCapture) {
         if (abs(direction.x) == 2 && abs(direction.y) == 2) {
-            sf::Vector2i capturedPosition = move.startPosition + sf::Vector2i(direction.x / 2, direction.y / 2);
-            const Field& capturedField = *getFieldAt(capturedPosition);
-            if (capturedField.getState() != FieldState::EMPTY &&
-                capturedField.getState() != startField.getState()) {
+            sf::Vector2i middlePos = move.startPosition + direction / 2;
+            const Field& middleField = *getFieldAt(middlePos);
+            if ((startField.getState() == FieldState::WHITE_PIECE && middleField.getState() == FieldState::BLACK_PIECE) ||
+                (startField.getState() == FieldState::BLACK_PIECE && middleField.getState() == FieldState::WHITE_PIECE)) {
                 return true;
             }
         }
     } else {
         if (abs(direction.x) == 1 && abs(direction.y) == 1) {
-            if ((startField.getState() == FieldState::WHITE_PIECE && direction.y == -1) ||
-                (startField.getState() == FieldState::BLACK_PIECE && direction.y == 1)) {
-                return true;
-            }
+            return true;
         }
     }
 
@@ -65,16 +62,15 @@ bool Board::canCapture(const sf::Vector2i& position) const {
     }
 
     std::vector<sf::Vector2i> directions = {{2, 2}, {2, -2}, {-2, 2}, {-2, -2}};
-    for (const auto& dir : directions) {
-        sf::Vector2i newPos = position + dir;
-        if (isInsideBoard(newPos)) {
-            Move move(position, newPos);
+    for (const sf::Vector2i& direction : directions) {
+        sf::Vector2i endPosition = position + direction;
+        if (isInsideBoard(endPosition)) {
+            Move move(position, endPosition);
             if (isValidMove(move, true)) {
                 return true;
             }
         }
     }
-
     return false;
 }
 
@@ -93,12 +89,6 @@ void Board::makeMove(const Move& move) {
         endField->setState(startField->getState());
         startField->setState(FieldState::EMPTY);
 
-//        // Sprawdzenie kolejnego bicia
-//        if (canCapture(move.endPosition)) {
-//            // Logika do obsługi kilkukrotnego bicia
-//            // Możesz dodać tutaj interakcję z użytkownikiem, aby kontynuować bicie
-//            std::cout << "Piece at (" << move.endPosition.x << ", " << move.endPosition.y << ") can capture again!" << std::endl;
-//        }
         std::cout << "Piece moved to position: (" << move.endPosition.x << ", " << move.endPosition.y << ")\n";
 
     }
@@ -138,6 +128,20 @@ bool Board::isInsideBoard(const sf::Vector2i& position) const {
 
 float Board::getFieldSideLength() const {
     return fieldSideLength;
+}
+
+bool Board::hasCaptureMoves(PieceColor color) const {
+    for (int y = 0; y < 8; ++y) {
+        for (int x = 0; x < 8; ++x) {
+            if ((color == PieceColor::WHITE && grid[y][x].getState() == FieldState::WHITE_PIECE) ||
+                (color == PieceColor::BLACK && grid[y][x].getState() == FieldState::BLACK_PIECE)) {
+                if (canCapture(sf::Vector2i(x, y))) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
 }
 
 void Board::printBoard() const {

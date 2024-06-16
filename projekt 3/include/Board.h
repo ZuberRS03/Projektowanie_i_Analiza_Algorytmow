@@ -18,6 +18,7 @@ public:
     Field* getFieldContainingPoint(const sf::Vector2i& point) const;
     float getFieldSideLength() const;
     bool hasCaptureMoves(PieceColor color) const;
+    void setMustContinueCapturing(bool value);
 
     void printBoard() const;
 
@@ -26,6 +27,7 @@ private:
     sf::Texture boardTexture;
     sf::Sprite boardSprite;
     float fieldSideLength;
+    bool mustContinueCapturing;
 
     bool isInsideBoard(const sf::Vector2i& position) const;
 };

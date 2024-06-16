@@ -47,13 +47,14 @@ bool Board::isValidMove(const Move& move, bool isCapture) const {
                 while (checkPos != move.endPosition) {
                     Field* checkField = getFieldAt(checkPos);
                     if (checkField->getState() != FieldState::EMPTY) {
-                        if (checkField->getState() != startField.getState() &&
-                            ((checkField->getState() == FieldState::WHITE_PIECE || checkField->getState() == FieldState::WHITE_QUEEN) ||
-                             (checkField->getState() == FieldState::BLACK_PIECE || checkField->getState() == FieldState::BLACK_QUEEN)) &&
-                            !captured) {
+                        if ((checkField->getState() == FieldState::WHITE_PIECE || checkField->getState() == FieldState::WHITE_QUEEN) &&
+                            (startField.getState() == FieldState::BLACK_PIECE || startField.getState() == FieldState::BLACK_QUEEN)) {
+                            captured = true;
+                        } else if ((checkField->getState() == FieldState::BLACK_PIECE || checkField->getState() == FieldState::BLACK_QUEEN) &&
+                                   (startField.getState() == FieldState::WHITE_PIECE || startField.getState() == FieldState::WHITE_QUEEN)) {
                             captured = true;
                         } else {
-                            return false;
+                            return false; // Nie można zbić własnego pionka
                         }
                     }
                     checkPos += sf::Vector2i(stepX, stepY);
@@ -87,6 +88,8 @@ bool Board::isValidMove(const Move& move, bool isCapture) const {
     return false;
 }
 
+
+
 bool Board::canCapture(const sf::Vector2i& position) const {
     const Field& field = *getFieldAt(position);
     if (field.getState() == FieldState::EMPTY) {
@@ -111,7 +114,9 @@ bool Board::canCapture(const sf::Vector2i& position) const {
             bool canCapture = false;
             while (isInsideBoard(checkPos)) {
                 const Field& checkField = *getFieldAt(checkPos);
-                if (checkField.getState() != FieldState::EMPTY && checkField.getState() != field.getState()) {
+                if (checkField.getState() != FieldState::EMPTY && checkField.getState() != field.getState() &&
+                    ((field.getState() == FieldState::WHITE_QUEEN && (checkField.getState() == FieldState::BLACK_PIECE || checkField.getState() == FieldState::BLACK_QUEEN)) ||
+                     (field.getState() == FieldState::BLACK_QUEEN && (checkField.getState() == FieldState::WHITE_PIECE || checkField.getState() == FieldState::WHITE_QUEEN)))) {
                     sf::Vector2i nextPos = checkPos + direction;
                     if (isInsideBoard(nextPos) && getFieldAt(nextPos)->getState() == FieldState::EMPTY) {
                         canCapture = true;
@@ -139,26 +144,40 @@ void Board::makeMove(const Move& move) {
             while (checkPos != move.endPosition) {
                 Field* checkField = getFieldAt(checkPos);
                 if (checkField->getState() != FieldState::EMPTY) {
-                    checkField->setState(FieldState::EMPTY);
+                    if (checkField->getState() != startField->getState()) {
+                        checkField->setState(FieldState::EMPTY);
+                    } else {
+                        return; // Nie można zbić własnego pionka
+                    }
                 }
                 checkPos += sf::Vector2i(stepX, stepY);
             }
         } else if (abs(direction.x) == 2 && abs(direction.y) == 2) {
             sf::Vector2i capturedPosition = move.startPosition + sf::Vector2i(direction.x / 2, direction.y / 2);
             Field* capturedField = getFieldAt(capturedPosition);
-            if (capturedField) {
+            if (capturedField && capturedField->getState() != startField->getState()) {
                 capturedField->setState(FieldState::EMPTY);
+            } else {
+                return; // Nie można zbić własnego pionka
             }
         }
         endField->setState(startField->getState());
         startField->setState(FieldState::EMPTY);
+        bool promotion = false;
 
         if (endField->getState() == FieldState::WHITE_PIECE && move.endPosition.y == 0) {
             endField->setState(FieldState::WHITE_QUEEN);
+            promotion = true;
         } else if (endField->getState() == FieldState::BLACK_PIECE && move.endPosition.y == 7) {
             endField->setState(FieldState::BLACK_QUEEN);
+            promotion = true;
         }
 
+        if (!promotion && canCapture(move.endPosition)) {
+            mustContinueCapturing = true;
+        } else {
+            mustContinueCapturing = false;
+        }
     }
 }
 
@@ -200,8 +219,9 @@ float Board::getFieldSideLength() const {
 bool Board::hasCaptureMoves(PieceColor color) const {
     for (int y = 0; y < 8; ++y) {
         for (int x = 0; x < 8; ++x) {
-            if ((color == PieceColor::WHITE && grid[y][x].getState() == FieldState::WHITE_PIECE) ||
-                (color == PieceColor::BLACK && grid[y][x].getState() == FieldState::BLACK_PIECE)) {
+            FieldState state = grid[y][x].getState();
+            if ((color == PieceColor::WHITE && (state == FieldState::WHITE_PIECE || state == FieldState::WHITE_QUEEN)) ||
+                (color == PieceColor::BLACK && (state == FieldState::BLACK_PIECE || state == FieldState::BLACK_QUEEN))) {
                 if (canCapture(sf::Vector2i(x, y))) {
                     return true;
                 }
@@ -210,6 +230,7 @@ bool Board::hasCaptureMoves(PieceColor color) const {
     }
     return false;
 }
+
 
 void Board::printBoard() const {
     for (int y = 0; y < 8; ++y) {
@@ -233,4 +254,8 @@ void Board::printBoard() const {
         }
         std::cout << "|" << std::endl;
     }
+}
+
+void Board::setMustContinueCapturing(bool value) {
+    mustContinueCapturing = value;
 }

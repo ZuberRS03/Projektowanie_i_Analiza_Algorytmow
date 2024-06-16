@@ -53,38 +53,40 @@ void Game::handlePlayerInput() {
                 sf::Vector2i mousePos = sf::Mouse::getPosition(window);
 
                 if (isPieceSelected) {
+                    // Ruch pionka
                     Field* endField = board.getFieldContainingPoint(mousePos);
                     if (endField) {
                         sf::Vector2i endPosition((int)(endField->getPosition().x / board.getFieldSideLength()), (int)(endField->getPosition().y / board.getFieldSideLength()));
                         Move move(selectedPosition, endPosition);
-                        bool isCapture = board.isValidMove(move, true);
+                        bool isCapture = board.isValidMove(move, true); // Sprawdź ruch bicia
                         if (isCapture) {
                             board.makeMove(move);
                             if (!board.canCapture(endPosition)) {
                                 isPieceSelected = false;
                                 selectedField = nullptr;
-                                mustContinueCapturing = false;
+                                mustContinueCapturing = false; // Reset mustContinueCapturing
                                 currentTurn = (currentTurn == PieceColor::WHITE) ? PieceColor::BLACK : PieceColor::WHITE;
                                 currentPlayer = (currentTurn == PieceColor::WHITE) ? player1 : player2;
-                                turnIndicator.setFillColor(currentTurn == PieceColor::WHITE ? sf::Color::White : sf::Color::Black);
-                                updateCaptureIndicator();
+                                turnIndicator.setFillColor(currentTurn == PieceColor::WHITE ? sf::Color::White : sf::Color::Black); // Zmień kolor wskaźnika tury
+                                updateCaptureIndicator(); // Aktualizuj wskaźnik bicia
                             } else {
                                 selectedPosition = endPosition;
                                 selectedField = endField;
-                                mustContinueCapturing = true;
+                                mustContinueCapturing = true; // Ustaw mustContinueCapturing na true
+                                board.setMustContinueCapturing(true); // Aktualizuj stan mustContinueCapturing w Board
                                 std::cout << "Piece can continue capturing at position: (" << endPosition.x << ", " << endPosition.y << ")\n";
-                                updateCaptureIndicator();
+                                updateCaptureIndicator(); // Aktualizuj wskaźnik bicia
                             }
-                            board.printBoard();
-                        } else if (!mustContinueCapturing && !board.hasCaptureMoves(currentTurn) && board.isValidMove(move, false)) {
+                            board.printBoard(); // Wyświetl planszę po ruchu
+                        } else if (!mustContinueCapturing && !board.hasCaptureMoves(currentTurn) && board.isValidMove(move, false)) { // Sprawdź zwykły ruch
                             board.makeMove(move);
                             isPieceSelected = false;
                             selectedField = nullptr;
                             currentTurn = (currentTurn == PieceColor::WHITE) ? PieceColor::BLACK : PieceColor::WHITE;
                             currentPlayer = (currentTurn == PieceColor::WHITE) ? player1 : player2;
-                            turnIndicator.setFillColor(currentTurn == PieceColor::WHITE ? sf::Color::White : sf::Color::Black);
-                            updateCaptureIndicator();
-                            board.printBoard();
+                            turnIndicator.setFillColor(currentTurn == PieceColor::WHITE ? sf::Color::White : sf::Color::Black); // Zmień kolor wskaźnika tury
+                            updateCaptureIndicator(); // Aktualizuj wskaźnik bicia
+                            board.printBoard(); // Wyświetl planszę po ruchu
                         } else {
                             isPieceSelected = false;
                             selectedField = nullptr;
@@ -92,6 +94,7 @@ void Game::handlePlayerInput() {
                         }
                     }
                 } else {
+                    // Wybór pionka
                     Field* field = board.getFieldContainingPoint(mousePos);
                     if (field && field->getState() != FieldState::EMPTY &&
                         ((field->getState() == FieldState::WHITE_PIECE && currentTurn == PieceColor::WHITE) ||
@@ -119,11 +122,7 @@ void Game::update() {
 
 void Game::updateCaptureIndicator() {
     bool captureMoveAvailable = board.hasCaptureMoves(currentTurn);
-    if (captureMoveAvailable) {
-        captureIndicator.setFillColor(sf::Color::Red);
-    } else {
-        captureIndicator.setFillColor(sf::Color::Transparent);
-    }
+    captureIndicator.setFillColor(captureMoveAvailable ? sf::Color::Red : sf::Color::Transparent);
 }
 
 void Game::render() {

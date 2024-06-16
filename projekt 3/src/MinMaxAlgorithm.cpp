@@ -3,28 +3,28 @@
 #include <iostream>
 
 Move MinMaxAlgorithm::calculateBestMove(const Board& board, int depth) {
-    std::cout << "Calculating best move for bot..." << std::endl;
+//    std::cout << "Calculating best move for bot..." << std::endl;
     int bestValue = std::numeric_limits<int>::min();
     Move bestMove(sf::Vector2i(0, 0), sf::Vector2i(0, 0));
 
     std::vector<Move> allPossibleMoves = getAllPossibleMoves(board, PieceColor::BLACK); // Zmieniono na PieceColor::BLACK dla bota
 
-    std::cout << "Calculating best move for bot..." << std::endl;
+//    std::cout << "Calculating best move for bot..." << std::endl;
     for (const Move& move : allPossibleMoves) {
-        std::cout << "Evaluating move: (" << move.startPosition.x << ", " << move.startPosition.y << ") -> ("
-                  << move.endPosition.x << ", " << move.endPosition.y << ")" << std::endl;
+//        std::cout << "Evaluating move: (" << move.startPosition.x << ", " << move.startPosition.y << ") -> ("
+//                  << move.endPosition.x << ", " << move.endPosition.y << ")" << std::endl;
         Board boardCopy = board; // Utwórz kopię planszy
         boardCopy.makeMove(move);
         int boardValue = minMax(boardCopy, depth - 1, false);
-        std::cout << "Move value: " << boardValue << std::endl;
+//        std::cout << "Move value: " << boardValue << std::endl;
         if (boardValue > bestValue) {
             bestValue = boardValue;
             bestMove = move;
         }
     }
 
-    std::cout << "Best move selected: (" << bestMove.startPosition.x << ", " << bestMove.startPosition.y << ") -> ("
-              << bestMove.endPosition.x << ", " << bestMove.endPosition.y << ")" << std::endl;
+//    std::cout << "Best move selected: (" << bestMove.startPosition.x << ", " << bestMove.startPosition.y << ") -> ("
+//              << bestMove.endPosition.x << ", " << bestMove.endPosition.y << ")" << std::endl;
     return bestMove;
 }
 
@@ -49,7 +49,9 @@ int MinMaxAlgorithm::evaluateBoard(const Board& board) {
 
 int MinMaxAlgorithm::minMax(Board& board, int depth, bool isMaximizingPlayer) {
     if (depth == 0) {
-        return evaluateBoard(board);
+        int eval = evaluateBoard(board);
+        std::cout << "Evaluating board at depth 0: " << eval << std::endl;
+        return eval;
     }
 
     std::vector<Move> allPossibleMoves = getAllPossibleMoves(board, isMaximizingPlayer ? PieceColor::BLACK : PieceColor::WHITE);
@@ -57,26 +59,52 @@ int MinMaxAlgorithm::minMax(Board& board, int depth, bool isMaximizingPlayer) {
     if (isMaximizingPlayer) {
         int maxEval = std::numeric_limits<int>::min();
         for (const Move& move : allPossibleMoves) {
+            std::cout << "Maximizing player evaluating move: (" << move.startPosition.x << ", " << move.startPosition.y << ") -> ("
+                      << move.endPosition.x << ", " << move.endPosition.y << ")" << std::endl;
             Board boardCopy = board;
             boardCopy.makeMove(move);
             int eval = minMax(boardCopy, depth - 1, false);
             maxEval = std::max(maxEval, eval);
+            // Obsługa wielokrotnego bicia
+            while (boardCopy.canCapture(move.endPosition)) {
+                std::vector<sf::Vector2i> endPositions = getPossibleEndPositions(boardCopy, move.endPosition, true);
+                for (const sf::Vector2i& endPos : endPositions) {
+                    Move nextMove(move.endPosition, endPos);
+                    boardCopy.makeMove(nextMove);
+                    eval = minMax(boardCopy, depth - 1, false);
+                    maxEval = std::max(maxEval, eval);
+                }
+            }
         }
+        std::cout << "Maximizing player at depth " << depth << ": " << maxEval << std::endl;
         return maxEval;
     } else {
         int minEval = std::numeric_limits<int>::max();
         for (const Move& move : allPossibleMoves) {
+            std::cout << "Minimizing player evaluating move: (" << move.startPosition.x << ", " << move.startPosition.y << ") -> ("
+                      << move.endPosition.x << ", " << move.endPosition.y << ")" << std::endl;
             Board boardCopy = board;
             boardCopy.makeMove(move);
             int eval = minMax(boardCopy, depth - 1, true);
             minEval = std::min(minEval, eval);
+            // Obsługa wielokrotnego bicia
+            while (boardCopy.canCapture(move.endPosition)) {
+                std::vector<sf::Vector2i> endPositions = getPossibleEndPositions(boardCopy, move.endPosition, true);
+                for (const sf::Vector2i& endPos : endPositions) {
+                    Move nextMove(move.endPosition, endPos);
+                    boardCopy.makeMove(nextMove);
+                    eval = minMax(boardCopy, depth - 1, true);
+                    minEval = std::min(minEval, eval);
+                }
+            }
         }
+        std::cout << "Minimizing player at depth " << depth << ": " << minEval << std::endl;
         return minEval;
     }
 }
 
 std::vector<Move> MinMaxAlgorithm::getAllPossibleMoves(const Board& board, PieceColor color) {
-    std::vector<Move> allMoves;
+    std::vector<Move> allPossibleMoves;
     std::vector<Move> capturingMoves;
 
     for (int y = 0; y < 8; ++y) {
@@ -86,13 +114,27 @@ std::vector<Move> MinMaxAlgorithm::getAllPossibleMoves(const Board& board, Piece
             if ((color == PieceColor::WHITE && (state == FieldState::WHITE_PIECE || state == FieldState::WHITE_QUEEN)) ||
                 (color == PieceColor::BLACK && (state == FieldState::BLACK_PIECE || state == FieldState::BLACK_QUEEN))) {
 
-                std::vector<sf::Vector2i> possibleEndPositions = getPossibleEndPositions(board, pos);
+                std::vector<sf::Vector2i> possibleEndPositions = getPossibleEndPositions(board, pos, true); // true dla bicia
                 for (const sf::Vector2i& endPos : possibleEndPositions) {
                     Move move(pos, endPos);
                     if (board.isValidMove(move, true)) {
-                        capturingMoves.push_back(move);  // Dodaj ruch bicia do oddzielnej listy
-                    } else if (board.isValidMove(move, false)) {
-                        allMoves.push_back(move);  // Dodaj zwykły ruch do listy
+                        capturingMoves.push_back(move); // Dodaj ruch bicia do oddzielnej listy
+
+                        // Po każdym możliwym biciu, sprawdź czy są dostępne kolejne bicia
+                        Board tempBoard = board;
+                        tempBoard.makeMove(move);
+                        if (tempBoard.hasCaptureMoves(color)) {
+                            std::vector<Move> additionalMoves = getAllPossibleMoves(tempBoard, color);
+                            capturingMoves.insert(capturingMoves.end(), additionalMoves.begin(), additionalMoves.end());
+                        }
+                    }
+                }
+
+                possibleEndPositions = getPossibleEndPositions(board, pos, false); // false dla normalnego ruchu
+                for (const sf::Vector2i& endPos : possibleEndPositions) {
+                    Move move(pos, endPos);
+                    if (board.isValidMove(move, false)) {
+                        allPossibleMoves.push_back(move); // Dodaj zwykły ruch do listy
                     }
                 }
             }
@@ -100,17 +142,18 @@ std::vector<Move> MinMaxAlgorithm::getAllPossibleMoves(const Board& board, Piece
     }
 
     if (!capturingMoves.empty()) {
-        return capturingMoves;  // Priorytetowo traktuj ruchy bicia
+        return capturingMoves; // Priorytetowo traktuj ruchy bicia
     }
-    return allMoves;  // Zwróć zwykłe ruchy tylko, jeśli nie ma ruchów bicia
+
+    return allPossibleMoves; // Zwróć zwykłe ruchy tylko, jeśli nie ma ruchów bicia
 }
 
-std::vector<sf::Vector2i> MinMaxAlgorithm::getPossibleEndPositions(const Board& board, const sf::Vector2i& startPos) {
+std::vector<sf::Vector2i> MinMaxAlgorithm::getPossibleEndPositions(const Board& board, const sf::Vector2i& startPos, bool isCapture) {
     std::vector<sf::Vector2i> endPositions;
     FieldState state = board.getFieldAt(startPos)->getState();
 
     if (state == FieldState::WHITE_QUEEN || state == FieldState::BLACK_QUEEN) {
-        // Ruchy damki
+        // Ruchy i bicia damki
         int directions[4][2] = {{1, 1}, {1, -1}, {-1, 1}, {-1, -1}};
         for (auto& dir : directions) {
             for (int i = 1; i < 8; ++i) {
@@ -118,9 +161,14 @@ std::vector<sf::Vector2i> MinMaxAlgorithm::getPossibleEndPositions(const Board& 
                 if (!board.isInsideBoard(endPos)) {
                     break; // Zatrzymaj się, jeśli wyjdziesz poza planszę
                 }
-                endPositions.push_back(endPos);
-                if (board.getFieldAt(endPos)->getState() != FieldState::EMPTY) {
-                    break; // Zatrzymaj się, jeśli napotkasz inny pionek
+                if (board.isValidMove(Move(startPos, endPos), isCapture)) {
+                    endPositions.push_back(endPos);
+                    if (isCapture && board.getFieldAt(endPos)->getState() != FieldState::EMPTY) {
+                        break; // Zatrzymaj się po zbiciu
+                    }
+                    if (!isCapture && board.getFieldAt(endPos)->getState() != FieldState::EMPTY) {
+                        break; // Zatrzymaj się, jeśli napotkasz inny pionek
+                    }
                 }
             }
         }
@@ -130,10 +178,12 @@ std::vector<sf::Vector2i> MinMaxAlgorithm::getPossibleEndPositions(const Board& 
         int captureDirections[4][2] = {{2, 2}, {2, -2}, {-2, 2}, {-2, -2}};
 
         // Normalne ruchy
-        for (auto& dir : moveDirections) {
-            sf::Vector2i endPos = startPos + sf::Vector2i(dir[0], dir[1]);
-            if (board.isInsideBoard(endPos) && board.isValidMove(Move(startPos, endPos), false)) {
-                endPositions.push_back(endPos);
+        if (!isCapture) {
+            for (auto& dir : moveDirections) {
+                sf::Vector2i endPos = startPos + sf::Vector2i(dir[0], dir[1]);
+                if (board.isInsideBoard(endPos) && board.isValidMove(Move(startPos, endPos), false)) {
+                    endPositions.push_back(endPos);
+                }
             }
         }
 

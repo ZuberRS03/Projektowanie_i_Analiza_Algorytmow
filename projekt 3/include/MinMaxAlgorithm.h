@@ -14,7 +14,7 @@ public:
 
 private:
     std::vector<Move> getAllPossibleMoves(const Board& board, PieceColor color);
-    std::vector<sf::Vector2i> getPossibleEndPositions(const Board& board, const sf::Vector2i& startPos);
+    std::vector<sf::Vector2i> getPossibleEndPositions(const Board& board, const sf::Vector2i& startPos, bool isCapturing);
 };
 
 #endif //PROJEKT_3_MINMAXALGORITHM_H

@@ -49,9 +49,15 @@ bool Board::isValidMove(const Move& move, bool isCapture) const {
                     if (checkField->getState() != FieldState::EMPTY) {
                         if ((checkField->getState() == FieldState::WHITE_PIECE || checkField->getState() == FieldState::WHITE_QUEEN) &&
                             (startField.getState() == FieldState::BLACK_PIECE || startField.getState() == FieldState::BLACK_QUEEN)) {
+                            if (captured) {
+                                return false; // Nie można zbić więcej niż jednego pionka na raz
+                            }
                             captured = true;
                         } else if ((checkField->getState() == FieldState::BLACK_PIECE || checkField->getState() == FieldState::BLACK_QUEEN) &&
                                    (startField.getState() == FieldState::WHITE_PIECE || startField.getState() == FieldState::WHITE_QUEEN)) {
+                            if (captured) {
+                                return false; // Nie można zbić więcej niż jednego pionka na raz
+                            }
                             captured = true;
                         } else {
                             return false; // Nie można zbić własnego pionka
@@ -137,6 +143,8 @@ void Board::makeMove(const Move& move) {
     Field* endField = getFieldAt(move.endPosition);
     if (startField && endField) {
         sf::Vector2i direction = move.endPosition - move.startPosition;
+        bool captured = false;
+
         if ((startField->getState() == FieldState::WHITE_QUEEN || startField->getState() == FieldState::BLACK_QUEEN) && abs(direction.x) == abs(direction.y)) {
             int stepX = direction.x / abs(direction.x);
             int stepY = direction.y / abs(direction.y);
@@ -144,10 +152,11 @@ void Board::makeMove(const Move& move) {
             while (checkPos != move.endPosition) {
                 Field* checkField = getFieldAt(checkPos);
                 if (checkField->getState() != FieldState::EMPTY) {
-                    if (checkField->getState() != startField->getState()) {
+                    if (checkField->getState() != startField->getState() && !captured) {
                         checkField->setState(FieldState::EMPTY);
+                        captured = true;
                     } else {
-                        return; // Nie można zbić własnego pionka
+                        return; // Nie można zbić więcej niż jednego pionka na raz
                     }
                 }
                 checkPos += sf::Vector2i(stepX, stepY);
@@ -157,10 +166,12 @@ void Board::makeMove(const Move& move) {
             Field* capturedField = getFieldAt(capturedPosition);
             if (capturedField && capturedField->getState() != startField->getState()) {
                 capturedField->setState(FieldState::EMPTY);
+                captured = true;
             } else {
                 return; // Nie można zbić własnego pionka
             }
         }
+
         endField->setState(startField->getState());
         startField->setState(FieldState::EMPTY);
         bool promotion = false;
@@ -173,7 +184,7 @@ void Board::makeMove(const Move& move) {
             promotion = true;
         }
 
-        if (!promotion && canCapture(move.endPosition)) {
+        if (!promotion && captured && canCapture(move.endPosition)) {
             mustContinueCapturing = true;
         } else {
             mustContinueCapturing = false;
@@ -254,6 +265,7 @@ void Board::printBoard() const {
         }
         std::cout << "|" << std::endl;
     }
+    std::cout <<"---------------------------------------------------"<< std::endl;
 }
 
 void Board::setMustContinueCapturing(bool value) {

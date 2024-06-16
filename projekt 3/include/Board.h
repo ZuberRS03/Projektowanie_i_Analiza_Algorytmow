@@ -19,17 +19,18 @@ public:
     float getFieldSideLength() const;
     bool hasCaptureMoves(PieceColor color) const;
     void setMustContinueCapturing(bool value);
+    bool isInsideBoard(const sf::Vector2i& position) const;
 
     void printBoard() const;
 
+    bool mustContinueCapturing;
 private:
     Field grid[8][8];
     sf::Texture boardTexture;
     sf::Sprite boardSprite;
     float fieldSideLength;
-    bool mustContinueCapturing;
 
-    bool isInsideBoard(const sf::Vector2i& position) const;
+
 };
 
 

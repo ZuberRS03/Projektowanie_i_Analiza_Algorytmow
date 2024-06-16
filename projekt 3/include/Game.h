@@ -5,6 +5,7 @@
 #include "Board.h"
 #include "Player.h"
 #include "HumanPlayer.h"
+#include "Bot.h"
 
 class Game {
 public:
@@ -33,6 +34,7 @@ private:
     sf::CircleShape captureIndicator; // Dodaj wskaźnik bicia
     void updateCaptureIndicator(); // Deklaracja funkcji aktualizującej wskaźnik bicia
 
+    bool isBotGame; // Flaga gry z botem
 };
 
 #endif //PROJEKT_3_GAME_H

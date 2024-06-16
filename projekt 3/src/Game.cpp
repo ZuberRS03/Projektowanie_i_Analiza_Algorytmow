@@ -1,10 +1,20 @@
 #include "Game.h"
 #include <iostream>
 
-Game::Game() : window(sf::VideoMode(711, 691), "Checkers Game"), currentTurn(PieceColor::WHITE), selectedField(nullptr), isPieceSelected(false), mustContinueCapturing(false) {
+Game::Game() : window(sf::VideoMode(711, 691), "Checkers Game"), currentTurn(PieceColor::WHITE), selectedField(nullptr), isPieceSelected(false), mustContinueCapturing(false), isBotGame(false) {
     board.initialize();
-    player1 = new HumanPlayer(PieceColor::WHITE);
-    player2 = new HumanPlayer(PieceColor::BLACK);
+
+    // Zapytaj użytkownika, czy chce grać z botem
+    std::string input;
+    std::cout << "Czy chcesz grać z botem? (t/n): ";
+    std::cin >> input;
+    if (input == "t") {
+        player1 = new HumanPlayer(PieceColor::WHITE);
+        player2 = new Bot(PieceColor::BLACK);
+    } else {
+        player1 = new HumanPlayer(PieceColor::WHITE);
+        player2 = new HumanPlayer(PieceColor::BLACK);
+    }
     currentPlayer = player1;
 
     // Inicjalizacja wskaźnika tury
@@ -61,7 +71,7 @@ void Game::handlePlayerInput() {
                         bool isCapture = board.isValidMove(move, true); // Sprawdź ruch bicia
                         if (isCapture) {
                             board.makeMove(move);
-                            if (!board.canCapture(endPosition)) {
+                            if (!board.mustContinueCapturing) {
                                 isPieceSelected = false;
                                 selectedField = nullptr;
                                 mustContinueCapturing = false; // Reset mustContinueCapturing
@@ -114,10 +124,29 @@ void Game::handlePlayerInput() {
             }
         }
     }
+    if (currentPlayer == player2 && currentTurn == PieceColor::BLACK) {
+        std::cout << "Bot is making a move..." << std::endl;
+        Move botMove = player2->getMove(board);
+        std::cout << "Bot move: (" << botMove.startPosition.x << ", " << botMove.startPosition.y << ") -> ("
+                  << botMove.endPosition.x << ", " << botMove.endPosition.y << ")" << std::endl;
+        board.makeMove(botMove);
+        currentTurn = PieceColor::WHITE;
+        currentPlayer = player1;
+        turnIndicator.setFillColor(sf::Color::White);
+        updateCaptureIndicator();
+    }
 }
 
 void Game::update() {
     // Aktualizacja stanu gry
+//    if (isBotGame && currentTurn == PieceColor::BLACK) {
+//        Move botMove = player2->getMove(board);
+//        board.makeMove(botMove);
+//        currentTurn = PieceColor::WHITE;
+//        currentPlayer = player1;
+//        turnIndicator.setFillColor(sf::Color::White);
+//        updateCaptureIndicator();
+//    }
 }
 
 void Game::updateCaptureIndicator() {

@@ -3,6 +3,8 @@
 
 #include "Board.h"
 #include "Move.h"
+#include <vector>
+#include <iostream>
 
 class MinMaxAlgorithm {
 public:
@@ -11,7 +13,8 @@ public:
     int minMax(Board& board, int depth, bool isMaximizingPlayer);
 
 private:
-    // Funkcje pomocnicze
+    std::vector<Move> getAllPossibleMoves(const Board& board, PieceColor color);
+    std::vector<sf::Vector2i> getPossibleEndPositions(const Board& board, const sf::Vector2i& startPos);
 };
 
 #endif //PROJEKT_3_MINMAXALGORITHM_H

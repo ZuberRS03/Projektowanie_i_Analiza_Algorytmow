@@ -3,9 +3,15 @@
 #include <iostream>
 
 Move MinMaxAlgorithm::calculateBestMove(const Board& board, int depth) {
-    int bestValue = std::numeric_limits<int>::min();
-    Move bestMove(sf::Vector2i(0, 0), sf::Vector2i(0, 0));
     std::vector<Move> allPossibleMoves = getAllPossibleMoves(board, PieceColor::BLACK);
+
+    // Jeśli nie ma dostępnych ruchów, zwróć ruch domyślny
+    if (allPossibleMoves.empty()) {
+        return Move(sf::Vector2i(0, 0), sf::Vector2i(0, 0));
+    }
+
+    int bestValue = std::numeric_limits<int>::min();
+    Move bestMove = allPossibleMoves[0]; // Ustaw pierwszy dostępny ruch jako najlepszy
 
     for (const Move& move : allPossibleMoves) {
         Board boardCopy = board;

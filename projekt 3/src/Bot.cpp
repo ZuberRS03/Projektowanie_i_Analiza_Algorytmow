@@ -6,5 +6,5 @@ Bot::Bot(PieceColor color) : Player(color), minMaxAlgorithm() {
 
 Move Bot::getMove(const Board& board) {
     Move bestMove = minMaxAlgorithm.calculateBestMove(board, 3); // Przykładowa głębokość 3
-    return bestMove;
+    return bestMove; // Zwrócenie najlepszego ruchu
 }

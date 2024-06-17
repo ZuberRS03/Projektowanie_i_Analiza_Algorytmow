@@ -2,7 +2,7 @@
 
 int main() {
 
-    Game game;
-    game.run();
+    Game game; //Stworzenie obiektu gry
+    game.run(); //Uruchomienie gry
     return 0;
 }

@@ -3,28 +3,20 @@
 #include <iostream>
 
 Move MinMaxAlgorithm::calculateBestMove(const Board& board, int depth) {
-//    std::cout << "Calculating best move for bot..." << std::endl;
     int bestValue = std::numeric_limits<int>::min();
     Move bestMove(sf::Vector2i(0, 0), sf::Vector2i(0, 0));
+    std::vector<Move> allPossibleMoves = getAllPossibleMoves(board, PieceColor::BLACK);
 
-    std::vector<Move> allPossibleMoves = getAllPossibleMoves(board, PieceColor::BLACK); // Zmieniono na PieceColor::BLACK dla bota
-
-//    std::cout << "Calculating best move for bot..." << std::endl;
     for (const Move& move : allPossibleMoves) {
-//        std::cout << "Evaluating move: (" << move.startPosition.x << ", " << move.startPosition.y << ") -> ("
-//                  << move.endPosition.x << ", " << move.endPosition.y << ")" << std::endl;
-        Board boardCopy = board; // Utwórz kopię planszy
+        Board boardCopy = board;
         boardCopy.makeMove(move);
         int boardValue = minMax(boardCopy, depth - 1, false);
-//        std::cout << "Move value: " << boardValue << std::endl;
         if (boardValue > bestValue) {
             bestValue = boardValue;
             bestMove = move;
         }
     }
 
-//    std::cout << "Best move selected: (" << bestMove.startPosition.x << ", " << bestMove.startPosition.y << ") -> ("
-//              << bestMove.endPosition.x << ", " << bestMove.endPosition.y << ")" << std::endl;
     return bestMove;
 }
 
@@ -48,10 +40,9 @@ int MinMaxAlgorithm::evaluateBoard(const Board& board) {
 }
 
 int MinMaxAlgorithm::minMax(Board& board, int depth, bool isMaximizingPlayer) {
+
     if (depth == 0) {
-        int eval = evaluateBoard(board);
-        std::cout << "Evaluating board at depth 0: " << eval << std::endl;
-        return eval;
+        return evaluateBoard(board);
     }
 
     std::vector<Move> allPossibleMoves = getAllPossibleMoves(board, isMaximizingPlayer ? PieceColor::BLACK : PieceColor::WHITE);
@@ -59,46 +50,20 @@ int MinMaxAlgorithm::minMax(Board& board, int depth, bool isMaximizingPlayer) {
     if (isMaximizingPlayer) {
         int maxEval = std::numeric_limits<int>::min();
         for (const Move& move : allPossibleMoves) {
-            std::cout << "Maximizing player evaluating move: (" << move.startPosition.x << ", " << move.startPosition.y << ") -> ("
-                      << move.endPosition.x << ", " << move.endPosition.y << ")" << std::endl;
             Board boardCopy = board;
             boardCopy.makeMove(move);
             int eval = minMax(boardCopy, depth - 1, false);
             maxEval = std::max(maxEval, eval);
-            // Obsługa wielokrotnego bicia
-            while (boardCopy.canCapture(move.endPosition)) {
-                std::vector<sf::Vector2i> endPositions = getPossibleEndPositions(boardCopy, move.endPosition, true);
-                for (const sf::Vector2i& endPos : endPositions) {
-                    Move nextMove(move.endPosition, endPos);
-                    boardCopy.makeMove(nextMove);
-                    eval = minMax(boardCopy, depth - 1, false);
-                    maxEval = std::max(maxEval, eval);
-                }
-            }
         }
-        std::cout << "Maximizing player at depth " << depth << ": " << maxEval << std::endl;
         return maxEval;
     } else {
         int minEval = std::numeric_limits<int>::max();
         for (const Move& move : allPossibleMoves) {
-            std::cout << "Minimizing player evaluating move: (" << move.startPosition.x << ", " << move.startPosition.y << ") -> ("
-                      << move.endPosition.x << ", " << move.endPosition.y << ")" << std::endl;
             Board boardCopy = board;
             boardCopy.makeMove(move);
             int eval = minMax(boardCopy, depth - 1, true);
             minEval = std::min(minEval, eval);
-            // Obsługa wielokrotnego bicia
-            while (boardCopy.canCapture(move.endPosition)) {
-                std::vector<sf::Vector2i> endPositions = getPossibleEndPositions(boardCopy, move.endPosition, true);
-                for (const sf::Vector2i& endPos : endPositions) {
-                    Move nextMove(move.endPosition, endPos);
-                    boardCopy.makeMove(nextMove);
-                    eval = minMax(boardCopy, depth - 1, true);
-                    minEval = std::min(minEval, eval);
-                }
-            }
         }
-        std::cout << "Minimizing player at depth " << depth << ": " << minEval << std::endl;
         return minEval;
     }
 }
@@ -125,7 +90,13 @@ std::vector<Move> MinMaxAlgorithm::getAllPossibleMoves(const Board& board, Piece
                         tempBoard.makeMove(move);
                         if (tempBoard.hasCaptureMoves(color)) {
                             std::vector<Move> additionalMoves = getAllPossibleMoves(tempBoard, color);
-                            capturingMoves.insert(capturingMoves.end(), additionalMoves.begin(), additionalMoves.end());
+                            for (Move& additionalMove : additionalMoves) {
+                                Move extendedMove = move;
+                                for (const sf::Vector2i& endPos : additionalMove.endPositions) {
+                                    extendedMove.addEndPosition(endPos);
+                                }
+                                capturingMoves.push_back(extendedMove);
+                            }
                         }
                     }
                 }

@@ -29,8 +29,6 @@ private:
     sf::Texture boardTexture;
     sf::Sprite boardSprite;
     float fieldSideLength;
-
-
 };
 
 
